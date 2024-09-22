@@ -1,0 +1,771 @@
+---
+title: "CUADRO MANDOS"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+if (!require(shiny)) install.packages('shiny') 
+library(shiny) 
+if (!require(flexdashboard)) install.packages('flexdashboard') 
+library(flexdashboard)
+library(lubridate)
+library(dplyr)
+if (!require(urca)) install.packages('urca') 
+library(urca)
+if (!require(GGally)) install.packages('GGally') 
+library(GGally)
+if (!require(pxR)) install.packages('pxR') 
+library(pxR)
+if (!require(fpp3)) install.packages('fpp3') 
+library(fpp3)
+if (!require(tidyverse)) install.packages('tidyverse') 
+library(tidyverse)
+library(ggplot2)
+
+library(MASS)
+library(shinydashboard)
+library(datasets)
+library(highcharter) 
+library(fpp3)
+library(RColorBrewer)
+library(openxlsx)  
+library(leaflet)  
+library(geojsonio)
+library(plotly)
+library(ggplot2)
+library(tidyverse)
+library(pxR)
+library(patchwork)
+library(urca)
+library(tsibble)
+library(shiny) 
+library(lubridate)
+library(dplyr)
+library(DT)
+library(sf)
+```
+
+```{r}
+# Número de sociedades y capital en miles de euros por provincia (también a nivel nacional) y por mes entre 1995-2023
+df_empresas <- read.px("empresas.px") %>%
+  as_tibble()
+
+df_empresas <- na.omit(df_empresas)
+
+df_empresas <- df_empresas %>%
+  pivot_wider(names_from = Número.de.sociedades.y.capital..en.miles.de.euros., values_from = value) %>%
+  mutate(Periodo=ym(Periodo),
+         Year = year(Periodo))
+```
+
+```{r}
+# Población por provincia y a nivel nacional, por sexo.
+poblacion_provincias <- read.px("poblacion_provincias_anual.px") %>%
+  as_tibble() %>%
+  pivot_wider(names_from = Sexo, values_from = value, values_fn = list) %>%
+  dplyr::rename(Year = Periodo) %>%
+  mutate(Provincias = str_replace(Provincias, "Total", "Total Nacional")) %>%
+  mutate(Year = as.double(as.character(Year))) %>%
+  arrange(Year)
+
+# Población años 1995, 2022 y 2023
+poblacion95_22_23 <- read.px("poblacion95_22_23.px") %>%
+  as_tibble() %>%
+  pivot_wider(names_from = Sexo, values_from = value, values_fn = list) %>%
+  select(-Edad.simple) %>%
+  mutate(Periodo = as.Date(Periodo, format = "%d de %B de %Y")) %>%
+  mutate(Year = format(Periodo, "%Y")) %>%
+  select(-Periodo)
+
+# Población por provincias completando con los años que faltaban
+poblacion_provincias_completo <- poblacion_provincias %>%
+  rbind(poblacion95_22_23) %>%
+  mutate(Year = as.double(Year))
+
+
+## Combinamos los dataframes
+empresas_provincias_pob <- left_join(df_empresas, poblacion_provincias_completo, by=c("Provincias", "Year")) %>%
+  mutate(Total = as.numeric(Total),
+         Hombres= as.numeric(Hombres), 
+         Mujeres=as.numeric(Mujeres))
+
+empresas_provincias_pob <- empresas_provincias_pob %>%
+  group_by(Provincias) %>%
+  mutate(tasa_numero_sociedades_total = (`Número de Sociedades`/Total)*100,
+         tasa_numero_sociedades_hombres = (`Número de Sociedades`/Hombres)*100,
+         tasa_numero_sociedades_mujeres = (`Número de Sociedades`/Mujeres)*100)
+
+# campo para seleccionar provincias
+provincias <- levels(as.factor(empresas_provincias_pob$Provincias))
+
+# campo para seleccionar años
+years <- levels(as.factor(empresas_provincias_pob$Periodo))
+
+# Campo para seleccionar estados de las sociedades
+estados <- levels(as.factor(empresas_provincias_pob$Estados.Sociedades))
+```
+
+[comment 02]: # CARGO LOS DATOS
+```{r}
+# Número de sociedades y capital en miles de euros (ya sea desembolsado por los inervosres o el total) por provincia (también a nivel nacional) y por mes entre 1995-2023
+final <- read.px("empresas.px") %>%
+  as_tibble()
+
+final <- na.omit(final)
+
+final <- final %>%
+  pivot_wider(names_from = Número.de.sociedades.y.capital..en.miles.de.euros., values_from = value) %>%
+  mutate(Periodo=ym(Periodo))
+
+spain <- geojson_read("https://ctim.es/AEDV/data/geo_spain_provincias.geojson", what = "sp")
+
+spain_tb <- spain %>% 
+  as_tibble()
+
+# Eliminar la fila correspondiente al Total Nacional
+spain_tb <- spain_tb %>%
+  filter(NAME_2 != "Total Nacional")
+
+
+# campo para seleccionar provincias
+provincias <- levels(as.factor(final$Provincias))
+
+# campo para seleccionar años
+years <- levels(as.factor(final$Periodo))
+
+
+
+
+
+
+# Vectores de latitudes y longitudes
+latitudes <- c(40.4637, 39.2796, 39.4698, 37.5443, 42.9896, 43.3134, 41.6523, 39.4937, 39.3588, 41.5912, 42.9896, 41.6523, 39.4937, 37.5443, 43.1828, 39.4698, 39.2796, 37.5443, 42.5751, 39.2796, 42.9896, 41.5912, 37.5443, 39.2796, 37.5443, 41.5982, 37.5443, 41.6523, 41.5912, 42.5751, 40.4168, 37.5443, 37.9922, 42.6954, 42.5751, 41.6523, 28.2916, 42.5751, 42.2871, 41.6523, 28.2916, 41.6523, 37.5443, 41.6523, 41.5912, 41.5982, 39.2796, 39.4698, 41.6523, 39.2796, 39.4698, 41.6523, 41.6523, 41.5982, 35.8894, 35.2923)
+
+longitudes <- c(-3.7492, -3.0977, -0.3774, -5.9833, -2.6189, -5.9419, -4.7245, -6.0679, 2.6493, 1.5209, -2.6189, -4.7245, -6.0679, -5.9833, -3.7797, -0.3774, -3.0977, -5.9833, -7.8662, -3.0977, -2.6189, 1.5209, -5.9833, -3.0977, -5.9833, -0.5510, -5.9833, -4.7245, 1.5209, -7.8662, -3.7038, -5.9833, -1.1300, -1.6055, -7.8662, -4.7245, -15.4134, -7.8662, -2.4637, -4.7245, -15.4134, -4.7245, -5.9833, -4.7245, 1.5209, -0.5510, -3.0977, -0.3774, -4.7245, -3.0977, -0.3774, -4.7245, -4.7245, -0.5510, -5.3131, -2.9381)
+
+comunidades_autonomas <- c("Total Nacional", "Castilla-La Mancha", "Comunidad Valenciana", "Andalucía", "País Vasco", "Principado de Asturias", "Castilla y León", "Extremadura", "Islas Baleares", "Cataluña", "País Vasco", "Castilla y León", "Extremadura", "Andalucía", "Cantabria", "Comunidad Valenciana", "Castilla-La Mancha", "Andalucía", "Galicia", "Castilla-La Mancha", "País Vasco", "Cataluña", "Andalucía", "Castilla-La Mancha", "Andalucía", "Aragón", "Andalucía", "Castilla y León", "Cataluña", "Galicia", "Comunidad de Madrid", "Andalucía", "Región de Murcia", "Comunidad Foral de Navarra", "Galicia", "Castilla y León", "Canarias", "Galicia", "La Rioja", "Castilla y León", "Canarias", "Castilla y León", "Andalucía", "Castilla y León", "Cataluña", "Aragón", "Castilla-La Mancha", "Comunidad Valenciana", "Castilla y León", "Castilla-La Mancha", "Comunidad Valenciana", "Castilla y León", "Castilla y León", "Aragón", "Ceuta", "Melilla")
+
+# Ajustar la longitud de la lista para que coincida con el número de provincias
+comunidades_autonomas <- comunidades_autonomas[1:length(provincias)]
+latitudes <- latitudes[1:length(provincias)]
+longitudes <- longitudes[1:length(provincias)]
+
+# Crear el data frame
+df <- data.frame(Provincias = provincias, ComunidadAutonoma = comunidades_autonomas, Latitud = latitudes, Longitud = longitudes)
+
+# Creo el dataframe combinado:
+spain_final <- left_join(df, final, by = "Provincias")
+
+
+
+# Renombramos las provincias para poder hacer un left_join:
+provincias <- c("Total Nacional", "02 Albacete", "03 Alicante/Alacant", "04 Almería", "01 Araba/Álava", "33 Asturias", "05 Ávila", "06 Badajoz", "07 Balears, Illes", "08 Barcelona", "48 Bizkaia", "09 Burgos", "10 Cáceres", "11 Cádiz", "39 Cantabria", "12 Castellón/Castelló", "13 Ciudad Real", "14 Córdoba", "15 Coruña, A", "16 Cuenca", "20 Gipuzkoa", "17 Girona", "18 Granada", "19 Guadalajara", "21 Huelva", "22 Huesca", "23 Jaén", "24 León", "25 Lleida", "27 Lugo", "28 Madrid", "29 Málaga", "30 Murcia", "31 Navarra", "32 Ourense", "34 Palencia", "35 Palmas, Las", "36 Pontevedra", "26 Rioja, La", "37 Salamanca", "38 Santa Cruz de Tenerife", "40 Segovia", "41 Sevilla", "42 Soria", "43 Tarragona", "44 Teruel", "45 Toledo", "46 Valencia/València", "47 Valladolid", "49 Zamora", "50 Zaragoza", "51 Ceuta", "52 Melilla")
+
+provincias2 <- c("04 Almería", "11 Cádiz", "14 Córdoba", "18 Granada", "21 Huelva", "23 Jaén", "29 Málaga", "41 Sevilla", "22 Huesca", "44 Teruel", "50 Zaragoza", "39 Cantabria", "02 Albacete", "13 Ciudad Real", "16 Cuenca", "19 Guadalajara", "45 Toledo", "05 Ávila", "09 Burgos", "24 León", "34 Palencia", "37 Salamanca", "40 Segovia", "42 Soria", "47 Valladolid", "49 Zamora", "08 Barcelona", "17 Girona", "25 Lleida", "43 Tarragona", "51 Ceuta", "52 Melilla", "28 Madrid", "31 Navarra", "03 Alicante/Alacant", "12 Castellón/Castelló", "46 Valencia/València", "06 Badajoz", "10 Cáceres", "15 Coruña, A", "27 Lugo", "32 Ourense", "36 Pontevedra", "07 Balears, Illes", "35 Palmas, Las", "38 Santa Cruz de Tenerife", "26 Rioja, La", "01 Araba/Álava", "20 Gipuzkoa", "48 Bizkaia", "33 Asturias", "30 Murcia")
+
+
+df_to_add <- data.frame(
+  GID_2 = "ESP.0.0_0",
+  GID_0 = "ESP",
+  COUNTRY = "Spain",
+  GID_1 = "ESP.0_0",
+  NAME_1 = "Total nacional",
+  NL_NAME_1 = NA,
+  NAME_2 = "Total Nacional",
+  VARNAME_2 = NA,
+  NL_NAME_2 = NA,
+  TYPE_2 = "Country",
+  ENGTYPE_2 = "Country",
+  CC_2 = "00",
+  HASC_2 = "ES.ES.ES"
+)
+
+
+spain_tb <- spain_tb %>%
+  rbind(df_to_add)
+spain_tb$Provincias <- provincias
+
+# Eliminar la fila correspondiente al Total Nacional
+spain_tb <- spain_tb %>%
+  filter(NAME_2 != "Total Nacional")
+
+# ELIMINAMOS LA COLUMNA CON LOS NOMBRES SIN IDENTIFICADOR:
+spain_tb$NAME_2 <- NULL
+spain_tb$Provincias <- provincias2
+
+# COMBINAMOS LOS DATAFRAMES DE LAS PROVINCIAS Y EL DE LOS DATOS TOTALES:
+spain_final <- left_join(spain_tb, spain_final, by = "Provincias")
+
+
+
+
+# Seleccionar solo las columnas relevantes (Provincias y Número de Sociedades)
+data_provincias <- spain_final %>%
+  select(Provincias, `Número de Sociedades`, Estados.Sociedades) %>%
+  filter(Estados.Sociedades == "Constituídas")
+
+# Eliminar la fila correspondiente al Total Nacional
+data_provincias <- data_provincias %>%
+  filter(Provincias != "Total Nacional")
+
+# Calcular el número acumulado de sociedades por provincia
+data_provincias <- data_provincias %>%
+  group_by(Provincias) %>%
+  mutate(`Número de Sociedades acumulado` = sum(`Número de Sociedades`))
+
+data_provincias_final <- data_provincias %>%
+  select(-`Número de Sociedades`) %>%
+  group_by(Provincias, `Número de Sociedades acumulado`) %>%
+  distinct()
+
+```
+
+```{r}
+empresas_provincias_pob_ts <- empresas_provincias_pob %>%
+  select(-Year, -`Número de Sociedades`, -Capital, -`Capital desembolsado`, -Total, -Hombres, -Mujeres, -tasa_numero_sociedades_hombres, -tasa_numero_sociedades_mujeres) %>%
+  as_tsibble(index = Periodo, key = c(Provincias, Estados.Sociedades)) %>%
+  arrange(Periodo)
+
+empresas_provincias_pob_ts_interpolate <- empresas_provincias_pob_ts %>%
+  filter(Periodo>=as.Date("2022-06-01") | Periodo<as.Date("2020-02-01") ) %>%
+  filter(Periodo>=as.Date("1998-01-01") | Periodo<as.Date("1997-01-01")) %>%
+  mutate(Periodo = yearmonth(Periodo)) %>%
+  as_tsibble(index = Periodo, key=c(Provincias, Estados.Sociedades)) %>%
+    fill_gaps()
+```
+
+```{r}
+data <- empresas_provincias_pob %>%
+  select(-Periodo, -Year) %>% 
+  na.omit() %>%
+  group_by(Provincias) %>%
+  summarise_all(mean)
+
+data <- data %>%
+  select(-Estados.Sociedades) %>%
+  column_to_rownames(var = "Provincias")
+
+pca <- prcomp(data,scale = TRUE)
+```
+
+
+
+MIS DATOS
+===================================== 
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+### EXPLICACIÓN DE CADA DATO
+
+- **Periodo**: Variable que indica la fecha de la que es el dato, está en formato 
+Año-Mes-Día, y va por meses desde el 1 de enero de 1995 hasta el 12 de diciembre de 2023.
+
+- **Provincias**: Variable que contiene todas las Provincias de España junto a un 
+código identificador otorgado por la INE. Además de todas las provincis, contiene
+un registro para referirse a España, llamado "Total Nacional".
+
+- **Estados.Sociedades**: Las empresas o sociedades tienen 5 estados posibles, pero
+nos centraremos en 4, estos son: Constituídas (empresas que se fundan ese mes), 
+Disueltas (empresas que se disuelven ese mes), Aumento de Capital (empresas que 
+experimentan un aumento de beneficios, y por tanto, un aumento del valor de la empresa),
+Reducen Capiatl (completamente opuesto al estado anterior).
+
+- **Número de Sociedades**: Número de Sociedades constituídas, disueltas y que auemntan 
+o reducen capital para cada provincia para la fecha seleccionada.
+
+- **Capital**: Capital total generado por las empresas en ese mes para la provincia 
+seleccionada.
+
+- **Capital desembolsado**: Cantidad de dinero que los accionistas han invertido 
+o contribuido efectivamente a la empresa en el momento de la emisión de las acciones.
+
+- **Year**: Variable que referencia el año al que pertenecen los datos.
+
+- **Total**: Variable referida a la población total de la provincia.
+
+- **Hombres**: Variable referida a la cantidad total de hombres de la provincia.
+
+- **Mujeres**: Variable referida a la cantidad total de mujeres de la provincia.
+
+- **tasa_numero_sociedades_total**: Variable derivada resultante de dividir el
+número de sociedades entre la población de la provincia y multiplicarlo por 100.
+De esta forma facilitamos las comparaciones entre las provincias.
+
+- **tasa_numero_sociedades_hombres**: Idéntica a la variable anterior, pero para
+los hombres.
+
+- **tasa_numero_sociedades_mujeres**: Idéntica a la variable anterior, pero para
+las mujeres
+
+
+
+Column
+--------------------------------------------------
+
+###
+```{r}
+datatable(empresas_provincias_pob, options = list(
+  stripeClasses = c('stripe1', 'stripe2'),
+  columnDefs = list(list(targets = "_all", className = 'dt-center')),
+  paging = TRUE,
+  searching = TRUE
+))
+
+```
+
+
+
+
+
+GRAFICAS INICIALES
+===================================== 
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+### SELECCIONE LA PROVINCIA
+```{r}
+selectInput(
+  "provincias",
+  label = "Provincia:",
+  choices = provincias,
+  selected = "35 Palmas, Las"
+)
+```
+
+Column {.tabset}
+--------------------------------
+### Tasas del nº de sociedades total
+```{r}
+renderPlotly({
+  p <- empresas_provincias_pob %>% 
+  filter(Provincias == input$provincias & Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  ggplot(aes(x=Estados.Sociedades,y=tasa_numero_sociedades_total,fill=Estados.Sociedades)) + 
+    geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(p)
+})
+```
+
+### Tasas para mujeres y hombres
+```{r}
+renderPlotly({
+  p <- empresas_provincias_pob %>% 
+  filter(Provincias == input$provincias, Estados.Sociedades=="Constituídas") %>%
+  ggplot(aes(x=tasa_numero_sociedades_hombres,y=tasa_numero_sociedades_mujeres, fill = Year)) + 
+    geom_point() +
+    scale_x_continuous(trans = 'log2') + 
+    geom_smooth(method = lm, se = FALSE) 
+ggplotly(p)
+})
+```
+
+### Evolución emprendimiento por provincias
+```{r}
+renderPlotly({
+  p <- empresas_provincias_pob %>%
+  filter(Estados.Sociedades=="Constituídas" & Provincias== input$provincias) %>%
+  ggplot(aes(x=Periodo,y=tasa_numero_sociedades_total))+ 
+  geom_line()+ 
+  theme_bw()
+
+ggplotly(p)
+})
+```
+
+### Empresas disueltas por provincias
+```{r}
+renderPlotly({
+  p <- empresas_provincias_pob %>%
+  filter(Estados.Sociedades=="Disueltas" & Provincias== input$provincias) %>%
+  ggplot(aes(x=Periodo,y=tasa_numero_sociedades_total))+ 
+  geom_line()+ 
+  theme_bw()
+
+ggplotly(p)
+})
+```
+
+
+
+
+
+COMPARACIONES
+=========================================
+
+Column {.sidebar data-width=230}
+--------------------------------------------------
+```{r}
+selectInput(
+  "provincias1", 
+  label = "Provincia 1:", 
+  choices = provincias,  
+  selected = "35 Palmas, Las" 
+)
+```
+
+```{r}
+selectInput(
+  "provincias2", 
+  label = "Provincia 2:", 
+  choices = provincias,  
+  selected = "38 Santa Cruz de Tenerife" 
+)
+```
+
+```{r}
+selectInput(
+  "provincias3", 
+  label = "Provincia 3:", 
+  choices = provincias,  
+  selected = "08 Barcelona" 
+)
+```
+
+```{r}
+selectInput(
+  "provincias4", 
+  label = "Provincia 4:", 
+  choices = provincias,  
+  selected = "28 Madrid" 
+)
+```
+
+```{r}
+selectInput(
+  "yearinit", 
+  label = "Start year:",
+  choices = years, 
+  selected = "1995-01-01"
+)
+```
+
+```{r}
+selectInput(
+  "yearend", 
+  label = "End year:",
+  choices = years, 
+  selected = "2023-12-01"
+)
+```
+
+```{r}
+selectInput(
+  "estados", 
+  label = "Estado:",
+  choices = estados, 
+  selected = "Constituídas"
+)
+```
+
+
+Column
+--------------------------------------------------
+
+###  
+```{r} 
+renderHighchart({
+ tsibble( 
+  date = empresas_provincias_pob$Periodo,
+  tasa_sociedades = empresas_provincias_pob$tasa_numero_sociedades_total,
+  location = empresas_provincias_pob$Provincias,
+  estados = empresas_provincias_pob$Estados.Sociedades,
+  index = date,
+  key = c(location, estados)) %>% 
+    filter(location == input$provincias1) %>% 
+    filter(date >= input$yearinit & date <= input$yearend) %>% 
+    filter(estados == input$estados) %>%
+    hchart("line",hcaes(x = date, y = tasa_sociedades, group = location))
+})
+```
+
+###
+
+```{r} 
+renderHighchart({
+ tsibble( 
+  date = empresas_provincias_pob$Periodo,
+  tasa_sociedades = empresas_provincias_pob$tasa_numero_sociedades_total,
+  location = empresas_provincias_pob$Provincias,
+  estados = empresas_provincias_pob$Estados.Sociedades,
+  index = date,
+  key = c(location, estados)) %>% 
+    filter(location == input$provincias2) %>% 
+    filter(date >= input$yearinit & date <= input$yearend) %>% 
+    filter(estados == input$estados) %>%
+    hchart("line",hcaes(x = date, y = tasa_sociedades, group = location))
+})
+```
+
+
+Column
+--------------------------------------------------
+
+### 
+```{r} 
+renderHighchart({
+ tsibble( 
+  date = empresas_provincias_pob$Periodo,
+  tasa_sociedades = empresas_provincias_pob$tasa_numero_sociedades_total,
+  location = empresas_provincias_pob$Provincias,
+  estados = empresas_provincias_pob$Estados.Sociedades,
+  index = date,
+  key = c(location, estados)) %>% 
+    filter(location == input$provincias3) %>% 
+    filter(date >= input$yearinit & date <= input$yearend) %>%
+    filter(estados == input$estados) %>%
+    hchart("line",hcaes(x = date, y = tasa_sociedades, group = location))
+})
+```
+
+###
+
+```{r} 
+renderHighchart({
+ tsibble( 
+  date = empresas_provincias_pob$Periodo,
+  tasa_sociedades = empresas_provincias_pob$tasa_numero_sociedades_total,
+  location = empresas_provincias_pob$Provincias,
+  estados = empresas_provincias_pob$Estados.Sociedades,
+  index = date,
+  key = c(location, estados)) %>% 
+    filter(location == input$provincias4) %>% 
+    filter(date >= input$yearinit & date <= input$yearend) %>% 
+    filter(estados == input$estados) %>%
+    hchart("line",hcaes(x = date, y = tasa_sociedades, group = location))
+})
+```
+
+
+
+
+
+ANÁLISIS CON Y SIN COVID
+=========================================
+
+Column {.sidebar data-width=300}
+--------------------------------------------------
+### Seleccione provincia y estado:
+```{r}
+selectInput(
+  "provincias_covid", 
+  label = "Provincia:", 
+  choices = provincias,  
+  selected = "35 Palmas, Las" 
+)
+```
+
+```{r}
+selectInput(
+  "estados_covid", 
+  label = "Estado:",
+  choices = estados, 
+  selected = "Constituídas"
+)
+```
+
+Column {.tabset}
+--------------------------------
+### Serie sin interpolar 
+```{r}
+plotly::renderPlotly({
+  p <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias==input$provincias_covid & Estados.Sociedades == input$estados_covid) %>%
+  autoplot()
+
+ggplotly(p)
+})
+```
+
+
+### Serie Interpolada
+```{r}
+plotly::renderPlotly({
+  p <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias==input$provincias_covid & Estados.Sociedades == input$estados_covid) %>%
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate) %>%
+                autoplot()
+
+ggplotly(p)
+})
+```
+
+
+### Descomposición STL
+```{r}
+plotly::renderPlotly({
+  p <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias == input$provincias_covid, Estados.Sociedades == input$estados_covid) %>%
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate) %>%
+  model(
+    STL(tasa_numero_sociedades_total ~ season(period = 12),
+    robust = TRUE)
+  ) |>
+  components() |>
+  autoplot()
+
+ggplotly(p)
+})
+```
+
+
+### Predicciones emprendimiento
+```{r}
+renderPlot({
+  empresas_provincias_pob_ts_interpolate2 <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias == input$provincias_covid, Estados.Sociedades == input$estados_covid) %>%
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate)
+  
+
+fit <- empresas_provincias_pob_ts_interpolate2 %>%
+  filter(Provincias == input$provincias_covid, Estados.Sociedades == input$estados_covid) %>%
+  model(ARIMA(tasa_numero_sociedades_total)) 
+
+prediccion <- fit %>%
+  forecast(h = "12 months")
+
+prediccion %>%
+  autoplot(empresas_provincias_pob_ts_interpolate2 %>%
+             filter(Periodo>= yearmonth(as.Date("2000-01-01"))))
+})
+```
+
+
+
+
+
+ANÁLISIS DE ATRIBUTOS
+============================================= 
+
+Row 
+-------------------------------------
+### MATRIZ DE CORRELACIÓN
+```{r}
+highcharter::renderHighchart({
+  empresas_provincias_pob <- left_join(df_empresas, poblacion_provincias_completo, by=c("Provincias", "Year")) %>%
+  mutate(Total = as.numeric(Total),
+         Hombres= as.numeric(Hombres), 
+         Mujeres=as.numeric(Mujeres))
+
+empresas_provincias_pob <- empresas_provincias_pob %>%
+  group_by(Provincias) %>%
+  mutate(tasa_numero_sociedades_total = (`Número de Sociedades`/Total)*100,
+         tasa_numero_sociedades_hombres = (`Número de Sociedades`/Hombres)*100,
+         tasa_numero_sociedades_mujeres = (`Número de Sociedades`/Mujeres)*100) %>%
+  ungroup()
+
+empresas_provincias_pob %>%
+  select(-Provincias, -Periodo, -Year, -Estados.Sociedades) %>%
+  cor(use="complete.obs") %>%
+  hchart()
+})
+``` 
+ 
+ 
+### Porcentaje de varianza explicada por las componentes principales
+    
+```{r}
+
+renderPlotly({
+  p <- tibble(
+  label=fct_inorder(paste("PC",1:length(pca$sdev))),
+  varPercent = pca$sdev^2/sum(pca$sdev^2) * 100
+) %>%
+  ggplot(aes(label,varPercent)) +
+    geom_bar(stat = "identity") +
+    labs(x= "Componentes Principales", 
+          y= "Porcentaje varianza explicada"
+    )
+ggplotly(p)
+})
+```
+
+
+Row 
+-------------------------------------
+   
+### Gráfico de dispersión con las dos primeras componentes
+```{r}
+highcharter::renderHighchart({
+  hchart(pca) 
+})
+```
+
+
+MAPA DE ESPAÑA
+=====================================
+
+Column {.sidebar data-width=240}
+--------------------------------------------------
+```{r}
+renderTable({
+  data <- data_provincias_final[[which(names(data_provincias_final)=="Número de Sociedades acumulado")]]
+  tibble( 
+    province=data_provincias_final$Provincias,
+    value=round(data,digits=2)
+  ) %>%
+    filter(is.na(value)==FALSE) %>%
+    arrange(desc(value)) %>%
+    mutate(value=prettyNum(round(value,digits=2))) %>%
+    head(300)
+})
+```
+
+
+
+Column
+--------------------------------------------------
+
+### 
+
+```{r} 
+leaflet::renderLeaflet({
+
+data <- data_provincias_final[[which(names(data_provincias_final)=="Número de Sociedades acumulado")]]
+
+ etiquetas <-paste("<strong> ", data_provincias_final$Provincias ,"</strong><br>","Nº de Sociedades Constituídas",": ",prettyNum(round(data,digits=2), big.mark = ",", scientific = FALSE))  %>%
+  lapply(htmltools::HTML)
+
+pal <- leaflet::colorQuantile("YlOrRd", data, n = 9)
+spain %>%
+  leaflet::leaflet() %>%  
+  leaflet::setView(lng = 25, lat = 22, zoom = 2) %>% 
+  leaflet::addPolygons(
+    fillColor = ~pal(data), 
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlightOptions = leaflet::highlightOptions( 
+      weight = 2,
+      color = rgb(0.2,0.2,0.2),
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE
+    ),
+    label = etiquetas 
+  ) %>% 
+  leaflet::addControl(data_provincias_final$`Número de Sociedades acumulado`, position = "topright") %>% 
+  leaflet::addLegend("topright", pal = pal, values = data,
+    title = " ", #data_provincias_final$`Número de Sociedades acumulado`,
+    labFormat = function(type, cuts, p) {
+          n = length(cuts) 
+          x = (cuts[-n] + cuts[-1])/2
+          x=prettyNum(round(x,digits=2), big.mark = ",", scientific = FALSE)
+          as.character(x)
+        },
+    opacity = 1
+  )
+})
+```
+
+
+

@@ -1,0 +1,604 @@
+---
+title: "Memoria Trabajo Final"
+author: "Daniel Talavera Hernández"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+[Enlace cuadro de mandos](http://10.22.143.222:3838/sample-apps/a2453/DashboardTrabajoFinal.Rmd).
+
+
+```{r,echo=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo=FALSE
+)
+```
+
+```{r}
+if (!require(wordcloud)) install.packages('wordcloud') 
+library(wordcloud)
+if (!require(RColorBrewer)) install.packages('RColorBrewer') 
+library(RColorBrewer)
+if (!require(GGally)) install.packages('GGally') 
+library(GGally)
+if (!require(openxlsx)) install.packages('openxlsx') 
+library(openxlsx)
+if (!require(pxR)) install.packages('pxR') 
+library(pxR)
+if (!require(patchwork)) install.packages('patchwork') 
+library(patchwork)
+if (!require(ggplot2)) install.packages('ggplot2') 
+library(ggplot2)
+if (!require(tidyverse)) install.packages('tidyverse') 
+library(tidyverse)
+if (!require(urca)) install.packages('urca') 
+library(urca)
+if (!require(fpp3)) install.packages('fpp3') 
+library(fpp3)
+if (!require(highcharter)) install.packages('highcharter') 
+library(highcharter) 
+if (!require(leaflet)) install.packages('leaflet') 
+library(leaflet)  
+if (!require(geojsonio)) install.packages('geojsonio') 
+library(geojsonio) 
+if (!require(plotly)) install.packages('plotly') 
+library(plotly)
+
+```
+
+
+
+## MEMORIA TRABAJO FINAL DANIEL TALAVERA HERNÁNDEZ
+
+
+
+## CONTEXTO: 
+Mis datos tratan la evolución del emprendimiento en España, tanto a nivel nacional
+como por provincias, con un seguimiento mensual, desde enero de 1995 hasta diciembre 
+de 2023. Por otro lado, se han obtenido datos de la población de las provincias de 
+España para  cada año desde 1995 hasta 2023 para facilitar el estudio de los datos, 
+además de evitar obtener conclusiones falsas. Cabe destacar que tanto  los datos 
+de emprendimiento como los datos de población se extrajeron del INE.  
+
+
+## ESTADO ACTUAL Y OBJETIVOS: 
+- La situación actual del emprendimiento en España se puede resumir de la siguiente manera:
+
+La actividad emprendedora española ha regresado a niveles previos a la pandemia, 
+con una mayor cantidad de iniciativas más digitalizadas e innovadoras. Además, el 
+sector de servicios a empresas (B2B, business-to-business) se ha consolidado como 
+un nicho de iniciativas emprendedoras de nivel tecnológico medio-alto.
+Por otro lado, las motivaciones para emprender en España siguen siendo poco ambiciosas 
+y se han visto afectadas negativamente por los años de pandemia, aunque, Mujeres y hombres, 
+sin importar su nivel de ingresos, se lanzan a emprender por igual.
+Por último, respecto a los obstáculos a la hora de emprender, destacan: La falta 
+de financiación, la fiscalidad y exceso de burocracia y la escasa educación en emprendimiento.
+
+
+- Motivación y objetivos:
+
+En los últimos años, he estado bastante interesado en el emprendimiento, y en las 
+diversas formas que hay de hacerlo, sin embargo, con el paso de los años, las 
+dificultades para los emprendedores no han hecho más que aumentar, por ello he decidido
+comprobar como han afectado estas dificultades y muchas otras que han surgido a 
+lo largo de los años a los emprendedores y emprendedoras de nuestro país. Además, 
+estudiaré si existe alguna época o mes en la que se constituyan más empresas,
+es decir, si el momento en el que comiences a emprender es o no relevante.
+Por otro lado, se observará como ha evolucionado el sector empresarial en España
+desde 1995 hasta ahora tanto a nivel nacional como por provincias, tratando de 
+centrarnos en la provincia de Las Palmas de Gran Canaria. También, veremos qué
+provincia o qué provincias contienen un mayor número de emprendedores, valorando
+también la población de la provincia, y comprobaremos si esto ha ido cambiando 
+a lo largo de los años. Otro factor a estudiar, será la pandemia, y como afectó
+al emprendimiento en las diferentes provincias y qué hubiese pasado si la pandemia 
+no hubiese ocurrido. Además del número de empresas constituídas y del capital
+invertido en ellas, se estudiará el número de empresas disueltas en las diferentes
+épocas y para las diferentes provincias, permitiéndonos observar las provincias en 
+las que más empresas se disuelven y en las que menos, y si estas son las mismas que 
+las provincias en las que más provincias se constituyen.
+
+
+
+
+## APORTACIONES:
+Entorno Socioeconómico:
+Al proporcionar datos detallados sobre la evolución del emprendimiento a lo largo 
+del tiempo y a nivel provincial, este proyecto ofrece una visión completa de la actividad 
+emprendedora en el país. Esto puede contribuir al entendimiento del panorama del 
+emprendimiento en España.
+
+Entorno Técnico (Uso de datos y análisis estadístico):
+Este trabajo implica el manejo y análisis de grandes conjuntos de datos relacionados 
+con el emprendimiento y la población. Esto implica el uso de técnicas de análisis 
+de datos para identificar tendencias, patrones y correlaciones significativas.
+Además, se aplican herramientas de visualización de datos para comunicar eficazmente 
+los hallazgos. Algunas de estas herramientas de visualización de datos son
+gráficos, mapas y otros medios visuales que ilustran las tendencias y patrones 
+identificados en los datos.
+
+Entorno Científico (Investigación sobre el impacto de la pandemia en el emprendimiento):
+El estudio de cómo la pandemia ha afectado al emprendimiento en diferentes provincias 
+puede generar conocimientos importantes sobre la resiliencia empresarial y las respuestas 
+a crisis económicas. Estos hallazgos pueden tener implicaciones tanto para la investigación 
+académica como para la formulación de políticas.
+Otro factor importante será estudiar la relación entre la población de una provincia 
+y la actividad emprendedora en esa área, este trabajo podría proporcionar bastante
+información sobre cómo los factores demográficos influyen en la creación y sostenibilidad 
+de empresas.
+
+En resumen, este trabajo tiene el potencial de generar conclusiones valiosas que pueden 
+informar la toma de decisiones en el ámbito político, económico y empresarial, así 
+como contribuir al avance del conocimiento en áreas relacionadas con el emprendimiento, 
+la economía y la sociedad.
+
+
+## DESARROLLO:
+**Fiabilidad de los datos**
+Los datos se ha obtenido del INE. El Instituto Nacional de Estadística (INE) de 
+España ha realizado numerosos esfuerzos para mantener la alta calidad y fiabilidad 
+de sus productos estadísticos. Estos son algunos puntos clave sobre su fiabilidad:
+
+- Gestión de la Calidad: El INE tiene una estrategia de gestión de la calidad basada 
+en el Marco Común de Calidad de la Unión Europea, los Principios Fundamentales de l
+as Naciones Unidas y el Código Ético del ISI. Esta estrategia incluye directrices 
+de calidad integradas en la misión y visión del INE, y un sistema de gestión de 
+calidad compuesto por normas e instrumentos.
+
+- Código de Buenas Prácticas de las Estadísticas Europeas (CBPEE): El INE sigue el 
+CBPEE, que establece el estándar para desarrollar, producir y difundir estadísticas 
+europeas. Los principios del CBPEE cubren aspectos como la independencia profesional, 
+la protección de la confidencialidad, la fiabilidad de los resultados, su precisión, 
+oportunidad, puntualidad, accesibilidad, claridad, comparabilidad y coherencia.
+
+En resumen, el INE se esfuerza por mantener la fiabilidad y la calidad de sus datos 
+a través de una gestión de calidad rigurosa, el cumplimiento de los estándares europeos 
+y la justificación metodológica de sus índices.
+
+**Análisis exploratorio inicial  de los datos con una descripción de incidencias encontradas relativas al contenido y organización de los datos utilizados **
+Respecto al análisis exploratorio inicial de los datos, no hubo grandes problemas
+para encontrar los datos en un formato adecuado para su procesamiento, y su organización
+era bastante buena, aunque necesitó algunas adaptaciones.
+
+**dentificación de los requisitos de procesado de los datos, combinación de tablas, etc. necesarios para el proyecto. **
+A continuación se muestra como se han procesado los datos. En primer lugar, cargo 
+los datos correspondientesal número de empresas constituidas, disueltas y que 
+aumentan o reducen capital en las diferentes provincias de España y a nivel nacional,
+desde enero de 1995 hasta diciembre de 2023. Tras leer los datos en formato px y 
+pasarlos a tibble, elimino los registros para los que el valor es NA, ordeno los 
+datos y paso la fecha a formato Año-Mes-Día.
+
+Además, cargo los datos correspondientes a la población en España organizada por 
+provincias y por sexo, desde 1995 hasta 2023, aunque . Al igual que para el conjunto 
+de datos anterior, leo el archivo con extensión px, lo paso a tibble y ordeno los datos. 
+Sin embargo, además de los pasos ya mencionados, también se realiza un cambio de 
+formato de la fecha, para que sea de tipo Date y para que coincida con el formato de 
+nuestro  conjunto de datos. Por otro lado, filtramos los datos de manera que manejamos 
+los datos de población totales de cada provincia, y no por rango de edades. Cabe
+destacar que se utilizaron dos tablas del INE para poder abarcar el periodo completo
+de los datos de la primera tabla.
+
+Por último, con un left_join, obtengo una tabla con todos los datos de los dos 
+conjuntos mencionados, uniéndolos por la variable "Provincias".
+```{r}
+# Número de sociedades y capital en miles de euros por provincia (también a nivel nacional) y por mes entre 1995-2023
+df_empresas <- read.px("empresas.px") %>%
+  as_tibble()
+
+df_empresas <- na.omit(df_empresas)
+
+df_empresas <- df_empresas %>%
+  pivot_wider(names_from = Número.de.sociedades.y.capital..en.miles.de.euros., values_from = value) %>%
+  mutate(Periodo=ym(Periodo),
+         Year = year(Periodo))
+
+
+# Población por provincia y a nivel nacional, por sexo.
+poblacion_provincias <- read.px("poblacion_provincias_anual.px") %>%
+  as_tibble() %>%
+  pivot_wider(names_from = Sexo, values_from = value, values_fn = list) %>%
+  rename(Year = Periodo) %>%
+  mutate(Provincias = str_replace(Provincias, "Total", "Total Nacional")) %>%
+  mutate(Year = as.double(as.character(Year))) %>%
+  arrange(Year)
+
+# Población años 1995, 2022 y 2023
+poblacion95_22_23 <- read.px("poblacion95_22_23.px") %>%
+  as_tibble() %>%
+  pivot_wider(names_from = Sexo, values_from = value, values_fn = list) %>%
+  select(-Edad.simple) %>%
+  mutate(Periodo = as.Date(Periodo, format = "%d de %B de %Y")) %>%
+  mutate(Year = format(Periodo, "%Y")) %>%
+  select(-Periodo)
+
+# Población por provincias completando con los años que faltaban
+poblacion_provincias_completo <- poblacion_provincias %>%
+  rbind(poblacion95_22_23) %>%
+  mutate(Year = as.double(Year))
+
+
+## Combinamos los dataframes
+empresas_provincias_pob <- left_join(df_empresas, poblacion_provincias_completo, by=c("Provincias", "Year")) %>%
+  mutate(Total = as.numeric(Total),
+         Hombres= as.numeric(Hombres), 
+         Mujeres=as.numeric(Mujeres))
+#empresas_provincias_pob
+```
+
+
+**Selección y aplicación de las herramientas estudiadas en la asignatura que mejor se adaptan para abordar los objetivos del proyecto. Esto puede incluir, herramientas de visualización estática o dinámica, análisis de series temporales o análisis de atributos. **
+Algunas de las herramientas estudiadas en la asignatura y que se han aplicado durante
+el desarrollo del proyecto han sido: gráficos de todo tipo tanto de forma estática 
+como de forma dinámica, series temporales, predicciones, análisis de atributos, etc.
+
+
+
+
+
+
+
+Esta gráfica muestra el número total de empresas constituídas, disueltas, que han 
+aumentado o disminuido el capital y que han desembolsado dividendos pasivos para 
+todo el país desde enero de 1995 hasta diciembre de 2023.
+El capital desembolsado es un término utilizado en el ámbito fiscal, empresarial 
+y contable, que se refiere a la cantidad de dinero que los accionistas o socios 
+de una empresa aportan al momento de su constitución o durante su vida útil.
+Esta gráfica simplemente nos muestra como era de esperar que el número de empresas 
+constituidas es bastante superior al número de empresas disueltas y al número de 
+empresas que aumentan o reducen capital. Sin embargo, vemos como el número de empresas 
+que aumentan capital es casi el doble que el número de empresas disueltas, por lo 
+que es mayor la cantdad de empresas que crecen tras ser constituidas que las empresas 
+que quiebran.
+```{r}
+p <- empresas_provincias_pob %>%  
+  group_by(Estados.Sociedades)  %>% 
+  summarise(`Número de Sociedades`=sum(`Número de Sociedades`)) %>%
+  filter(Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  ggplot(aes(x=Estados.Sociedades,y=`Número de Sociedades`,fill=Estados.Sociedades)) +
+    geom_bar(stat = "identity")  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(p)
+```
+
+
+Otra forma de visualizar lo comentado en el apartado anterior, pero usando porcentajes:
+```{r}
+empresas_provincias_pob %>%  
+  group_by(Estados.Sociedades)  %>% 
+  summarise(`Número de Sociedades`=sum(`Número de Sociedades`)) %>%
+  filter(Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  mutate(labels = scales::percent(`Número de Sociedades`/sum(`Número de Sociedades`))) %>%
+  ggplot(aes(x="",y=`Número de Sociedades`,fill=Estados.Sociedades)) +
+    geom_col() +
+    geom_text(aes(x=1.6,label = labels),position = position_stack(vjust = 0.5)) + 
+    coord_polar(theta = "y")
+
+```
+
+
+Como ya comentamos al principio de la memoria, la realización de tasas para poder
+comparar el emprendimiento entre provincias es clave, ya que es evidente que en
+provincias con poblaciones muy superiores a la media tendrán mayores valores en 
+todos los campos. A continuación realizamos las tasas correspondientes al porcentaje
+de sociedades constituídas, disueltas y que aumentan o reducen capital con respecto
+al total de la población para cada provincia y a nivel nacional, así como para los
+hombres y mujeres.
+```{r}
+empresas_provincias_pob <- empresas_provincias_pob %>%
+  group_by(Provincias) %>%
+  mutate(tasa_numero_sociedades_total = (`Número de Sociedades`/Total)*100,
+         tasa_numero_sociedades_hombres = (`Número de Sociedades`/Hombres)*100,
+         tasa_numero_sociedades_mujeres = (`Número de Sociedades`/Mujeres)*100)
+empresas_provincias_pob
+```
+
+
+
+Las 2 siguientes gráficas pretenden comparar como se ha desarrollado el sector empresarial
+en Canarias. Ambos son diagramas de cajas interactivos en los que se tiene para ambas
+provincias canarias la tasa del número total de sociedades constituídas, disueltas,
+y que aumentan o reducen capital a lo largo del tiempo. 
+Como podemos ver, en la provincia de Santa Cruz de Tenerife se han fundado un mayor
+número de empresas por habitante que en Las Palmas. Sin embargo, vemos como hay un
+mayor porcentaje de empresas que han tenido un aumento del Capital en la provincia
+de Las Palmas.
+```{r}
+# Boxplot de la tasa del número de empresas o sociedades constituídas, disueltas y que aumentan o disminuyen capital en Las Palmas
+p <- empresas_provincias_pob %>% 
+  filter(Provincias == "35 Palmas, Las" & Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  ggplot(aes(x=Estados.Sociedades,y=tasa_numero_sociedades_total,fill=Estados.Sociedades)) + 
+    geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(p)
+```
+
+```{r}
+# Boxplot de la tasa del número de empresas o sociedades constituídas, disueltas y que aumentan o disminuyen capital en Santa Cruz de Tenerife
+p <- empresas_provincias_pob %>% 
+  filter(Provincias == "38 Santa Cruz de Tenerife" & Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  ggplot(aes(x=Estados.Sociedades,y=tasa_numero_sociedades_total,fill=Estados.Sociedades)) + 
+    geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(p)
+```
+
+
+
+Este diagrama de dispersión interactivo contiene el número de sociedades constituídas
+por mujeres a nivel nacional en función del número de mujeres que viven en España,
+y lo mismo para los hombres. 
+Como era de epserar, vemos que existe una relación bastante alta entre el número
+de empresas constituídas por hombres y el número de empresas constituídas por mujeres,
+por lo que podemos afirmar que tanto los hombres como las mujeres emprenden por igual
+en España.
+```{r, warning=FALSE}
+# Diagrama de dispersión en el que comparamos los valores de la tasa del número de sociedades constituídas por hombres y por mujeres a nivel nacional
+p <- empresas_provincias_pob %>% 
+  filter(Provincias == "Total Nacional", Estados.Sociedades=="Constituídas") %>%
+  ggplot(aes(x=tasa_numero_sociedades_hombres,y=tasa_numero_sociedades_mujeres, fill=Year)) + 
+    geom_point() +
+    scale_x_continuous(trans = 'log2') + 
+    geom_smooth(method = lm, se = FALSE) 
+ggplotly(p)
+```
+
+
+Los siguientes dos gráficos de líneas muestran el número de sociedades constituídas 
+y disueltas por habitante en España desde el 1 de enero de 1995 hasta el 12 de diciembre de 2023.
+Como podemos observar, el número de empresas constituídas por habitante
+sufrió una gran caída  a mediados del 2008, mateniéndose estable hasta la pandemia, 
+en la que evidentemente vuelve a sufrir una caída. Tras la pandemia este índice
+vuelve a mentenerse con valores ligeramente superiores a los anteriores a la pandemia.
+Por otro lado, el número de sociedades disueltas por habitante, se ha mantenido más
+o menos estable a lo largo de los años. Sin embargo, al contrario de lo que se podía 
+esperar, el número de empresas disueltas no aumentó por el covid, este índice se
+mantuvo con valores muy bajos durante este periodo.
+```{r}
+# Gráfico de líneas mostrando la evolución del número de sociedades/empresas constituídas desde 1995 hasta 2023 a nivel nacional
+
+p <- empresas_provincias_pob %>%
+  filter(Estados.Sociedades=="Constituídas" & Provincias== "Total Nacional") %>%
+  ggplot(aes(x=Periodo,y=tasa_numero_sociedades_total))+ 
+  geom_line()+ 
+  theme_bw()
+
+ggplotly(p)
+```
+
+```{r}
+# Gráfico de líneas mostrando la evolución del número de sociedades/empresas disueltas desde 1995 hasta 2023 a nivel nacional
+p <- empresas_provincias_pob %>%
+  filter(Estados.Sociedades=="Disueltas" & Provincias== "Total Nacional") %>%
+  ggplot(aes(x=Periodo,y=tasa_numero_sociedades_total))+ 
+  geom_line()+ 
+  theme_bw()
+
+ggplotly(p)
+```
+
+
+
+
+Para llevar a cabo el estudio de las series temporales, manejaremos objetos tsibble,
+en los que se usará la varaiable Periodo como índice y las variables Provincias y
+Estado.Sociedades como key.
+```{r}
+empresas_provincias_pob_ts <- empresas_provincias_pob %>%
+  select(-Year, -`Número de Sociedades`, -Capital, -`Capital desembolsado`, -Total, -Hombres, -Mujeres, -tasa_numero_sociedades_hombres, -tasa_numero_sociedades_mujeres) %>%
+  as_tsibble(index = Periodo, key = c(Provincias, Estados.Sociedades)) %>%
+  arrange(Periodo)
+empresas_provincias_pob_ts
+
+# Relleno huecos en la serie temporal y sustituyo datos anómalos.
+empresas_provincias_pob_ts_interpolate <- empresas_provincias_pob_ts %>%
+  filter(Periodo>=as.Date("2022-06-01") | Periodo<as.Date("2020-02-01") ) %>%
+  filter(Periodo>=as.Date("1998-01-01") | Periodo<as.Date("1997-01-01")) %>%
+  mutate(Periodo = yearmonth(Periodo)) %>%
+  fill_gaps()
+  
+```
+
+
+
+En estas gráficas, vemos el número de sociedades para cada estado posible, a lo 
+largo de los años. La clave está en observar la estimación de lo que hubiese pasado
+si no hubiese existido el covid, que provoca una gran anomalía en los datos.
+Como podemos ver, la estimación muestra como el sector empresarial se habría mantenido
+estable en todos los aspectos de no ser por la pandemia.
+```{r}
+p <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias=="Total Nacional", Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  autoplot()
+
+ggplotly(p)
+```
+
+```{r}
+p <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias=="Total Nacional" & Estados.Sociedades != "Desembolsan dividendos Pasivos") %>%
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate) %>%
+                autoplot()
+
+ggplotly(p)
+```
+
+
+
+
+
+A continuación se realiza una descomposición STL del número de sociedades constituídas 
+por habitante a lo largo del tiempo en España. En primer lugar se observan la serie 
+original y la suavizada. A continuación, se observa la estacionalidad de este indicador,
+y destaca que su estacionalidad es bastante buena, bastante regular. Por último,
+se observa el error en el modelo, que ha ido disminuyendo con el paso del tiempo.
+```{r}
+# La gráfica muestra la serie temporal original, la serie suavizada, la estacionalidad y el error del modelo
+empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias == "Total Nacional", Estados.Sociedades == "Constituídas")|>
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate) %>%
+  model(
+    STL(tasa_numero_sociedades_total ~ season(period = 12),
+    robust = TRUE)
+  ) |>
+  components()
+
+p <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias == "Total Nacional", Estados.Sociedades == "Constituídas")|>
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate) %>%
+  model(
+    STL(tasa_numero_sociedades_total ~ season(period = 12),
+    robust = TRUE)
+  ) |>
+  components() |>
+  autoplot()
+
+ggplotly(p)
+```
+
+
+
+
+A continuación se realiza una predicción del número de sociedades constituídas a
+nivel nacional para los próximos 12 meses, teniendo en cuenta la anomalía del covid
+y estimando los datos para este periodo.
+Como podemos observar, se esperan un aumento seguido de una caída de este indicador,
+manteniendo una serie estable con respecto al resto.
+```{r}
+empresas_provincias_pob_ts_interpolate2 <- empresas_provincias_pob_ts_interpolate %>%
+  filter(Provincias == "Total Nacional", Estados.Sociedades == "Constituídas") %>%
+  model(ARIMA(tasa_numero_sociedades_total)) %>%
+  interpolate(empresas_provincias_pob_ts_interpolate)
+  
+
+fit <- empresas_provincias_pob_ts_interpolate2 %>%
+  filter(Provincias == "Total Nacional", Estados.Sociedades == "Constituídas") %>%
+  model(ARIMA(tasa_numero_sociedades_total)) 
+
+prediccion <- fit %>%
+  forecast(h = "12 months")
+
+prediccion %>%
+  autoplot(empresas_provincias_pob_ts_interpolate2 %>%
+             filter(Periodo>= yearmonth(as.Date("2000-01-01"))))
+```
+
+
+La siguiente gráfica prtende comparar las series temporales de distintas provincias
+para el número de sociedades constituídas por habitante de forma dinámica.
+Como podemos ver, en Madrid y Barcelona, estas series contienen valores más altos
+que para Las Palmas.
+```{r}
+empresas_provincias_pob_ts_interpolate %>% 
+  filter(Provincias == c("08 Barcelona", "28 Madrid", "35 Palmas, Las") & Estados.Sociedades=="Constituídas") %>%
+    hchart("line",hcaes(x = Periodo, y = tasa_numero_sociedades_total, group = Provincias))
+```
+
+
+
+
+En la matriz de correlación observamos el valor de correlación para cada par de atributos. Un valor positivo de la correlación nos indica que cuando aumenta el valor de un atributo, aumenta el valor del otro y cuanto más cerca de 1 es la correlación más perfecta es esa relación y mejor se ajustan los valores de los atributos a la recta de regresión. Cuando el valor de la correlación es negativo cuando aumenta el valor de un atributo disminuye el valor del otro y cuanto más cerca está de -1 la correlación más perfecta es esa relación. Cuando el valor de la correlación esté cercano a cero no existe una relación lineal clara entre ambos atributos. En el caso particular de esta colección de atributos, como es de esperar, se observa una correlación alta y positiva entre los indicadores relativos a la proporción número de sociedades por habitante, ya sea el total, hombre o mujer. También observamos que no hay ninguna correlación negativa en la matriz, pero si algunas con valores muy bajos, ya que variables como el Capital y la población no están relacionadas.
+```{r}
+empresas_provincias_pob <- left_join(df_empresas, poblacion_provincias_completo, by=c("Provincias", "Year")) %>%
+  mutate(Total = as.numeric(Total),
+         Hombres= as.numeric(Hombres), 
+         Mujeres=as.numeric(Mujeres))
+
+empresas_provincias_pob <- empresas_provincias_pob %>%
+  group_by(Provincias) %>%
+  mutate(tasa_numero_sociedades_total = (`Número de Sociedades`/Total)*100,
+         tasa_numero_sociedades_hombres = (`Número de Sociedades`/Hombres)*100,
+         tasa_numero_sociedades_mujeres = (`Número de Sociedades`/Mujeres)*100) %>%
+  ungroup()
+
+empresas_provincias_pob %>%
+  select(-Provincias, -Periodo, -Year, -Estados.Sociedades) %>%
+  cor(use="complete.obs") %>%
+  hchart()
+```
+
+
+
+ 
+```{r}
+data <- empresas_provincias_pob %>%
+  select(-Periodo, -Year) %>% 
+  na.omit() %>%
+  group_by(Provincias) %>%
+  summarise_all(mean)
+
+data <- data %>%
+  select(-Estados.Sociedades) %>%
+  column_to_rownames(var = "Provincias")
+
+pca <- prcomp(data,scale = TRUE)
+```
+
+
+
+
+Esta gráfica nos permite observar la varianza explicada por cada componente principal respecto al total de varianzas acumuladas por todas las variables. Observamos que la PC1  explica el 71% de la varianza total, la PC2 el 27.9% y a partir de la PC2 ya baja bastante y si utilizamos el criterio de quedarnos solo con las componentes principales que expliquen al menos el 2% de la varianza total, entonces nos quedaríamos con las primeras 2 componentes. Es decir habríamos conseguido reducir las 9 variables originales a 2 sin que la información global contenida en los atributos originales se vea afectada.
+```{r}
+p <- tibble(
+  label=paste("PC",1:length(pca$sdev)), # creación etiquetas para el eje horizontal
+  varPercent = pca$sdev^2/sum(pca$sdev^2) * 100 # cálculo porcentaje de varianza explicada
+) %>%
+  ggplot(aes(x=label,y=varPercent)) + # creación gráfico de barras interactivo
+    geom_bar(stat = "identity") +
+    labs(x= "Componentes Principales", 
+         y= "Porcentaje varianza explicada")
+ggplotly(p) 
+```
+
+
+
+
+En este diagrama de dispersión de los valores de las dos primeras componentes también se ilustra con vectores el peso de cada atributo original en las dos componentes. El tamaño de estos vectores  nos indica la magnitud del peso de dicho atributo en el cálculo de las dos primeras componentes, y su orientación nos indica si tiene más peso en una componente que en otra. Por ejemplo, un vector horizontal nos indica que el atributo no cuenta para la segunda componente y un vector vertical que el atributo no cuenta para la primera componente. Por otro lado, si en el diagrama de dispersión aparecen muchos puntos aglomerados nos indica que las dos primeras componentes no son capaces de discriminar bien entre provincias, es decir no podemos identificar bien una provincia y separarla de las otras usando los valores de las dos primeras componentes. En el caso de esta gráfica observamos muchos puntos muy pegados entre sí, lo que nos indica que el uso de las primeras dos componentes principales no permite una buena discriminación entre las provincias. Observamos que las variable `Capital desembolsado`, `Hombres` y `Número de Sociedades` tienen un gran peso en la primera componente. La variable `tasa_numero_sociedades_hombres` tiene mucho peso en la PC2 y poco en la PC1.
+```{r}
+hchart(pca)
+```
+
+
+
+
+## CONCLUSIONES Y TRABAJOS FUTUROS: resultados, conclusiones obtenidas, grado de consecución de los objetivos, posibles extensiones.
+- Conclusiones Generales:
+
+Análisis Integral del Sector Empresarial Español:
+El análisis exhaustivo del comportamiento del sector empresarial en España revela tendencias significativas desde 1995 hasta 2023.
+Se observa que el número de empresas constituidas supera considerablemente a las disueltas y aquellas que aumentan o reducen capital, evidenciando un crecimiento neto del sector.
+
+Importancia de las Tasas para la Comparación Regional:
+La realización de tasas para comparar el emprendimiento entre provincias es esencial para mitigar el impacto de diferencias poblacionales y obtener una visión más precisa del panorama empresarial. Gracias a estas tasas vemos que el dominio de provincias como Barcelona o Madrid en el sector empresarial en España es debido a que la población de estas provincias es muy superior a la del resto.
+
+Comparación del Sector Empresarial en Canarias:
+El análisis comparativo del sector empresarial en las provincias de Santa Cruz de Tenerife y Las Palmas revela diferencias en las tasas de fundación de empresas y aumento de capital. Aunque, en general, los valores de las tasas son bastante similares.
+
+Equidad de Género en el Emprendimiento:
+La relación equitativa entre hombres y mujeres en el emprendimiento en España es evidente, demostrando que ambos géneros contribuyen de manera significativa al panorama empresarial.
+
+Evolución Temporal y Resiliencia ante Crisis:
+El sector empresarial ha experimentado fluctuaciones significativas a lo largo de los años, incluyendo una caída durante la pandemia de COVID-19, seguida de una recuperación gradual. La pandemia ha tenido un efecto notable en el sector empresarial, pero se espera una estabilidad futura, según las proyecciones y análisis realizados.
+
+
+
+- Trabajos Futuros:
+
+Refinamiento de Análisis Geográfico:
+Explorar métodos más avanzados de análisis geoespacial para comprender mejor las diferencias regionales en el emprendimiento.
+
+Investigación sobre Factores Demográficos y Económicos:
+Examinar más a fondo cómo factores demográficos y económicos afectan las tendencias de emprendimiento en diferentes regiones.
+
+Exploración de Otras Técnicas de Análisis de Datos:
+Investigar otras técnicas de análisis de datos, como el aprendizaje automático, para obtener perspectivas adicionales sobre el comportamiento del sector empresarial.
+
+Análisis de Sensibilidad y Robustez:
+Realizar análisis de sensibilidad y robustez para evaluar la estabilidad de los resultados frente a cambios en los supuestos y metodologías utilizadas.s
+
