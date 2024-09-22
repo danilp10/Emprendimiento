@@ -131,5 +131,5 @@ de los datos de la primera tabla.
 
 ## EJECUCIÓN DEL CUADRO DE MANDOS
 Para poder ejecutar el cuadro de mandos (Archivo llamado DashboardTrabajoFinal.Rmd) es necesario descargar los ficheros correspondientes
-a los datos de población y las empresas y guardarlos en la misma carpeta que el cuadro de mandos. A continución, abriremos el cuadro de mandos con R Studio
-y pulsaremos "Run Document". 
+a los datos de población y las empresas ( archivos con extensión .px) y guardarlos en la misma carpeta que el cuadro de mandos. 
+A continución, abriremos el cuadro de mandos con R Studio y pulsaremos "Run Document". 
