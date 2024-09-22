@@ -126,3 +126,10 @@ nuestro  conjunto de datos. Por otro lado, filtramos los datos de manera que man
 los datos de población totales de cada provincia, y no por rango de edades. Cabe
 destacar que se utilizaron dos tablas del INE para poder abarcar el periodo completo
 de los datos de la primera tabla.
+
+
+
+## EJECUCIÓN DEL CUADRO DE MANDOS
+Para poder ejecutar el cuadro de mandos (Archivo llamado DashboardTrabajoFinal.Rmd) es necesario descargar los ficheros correspondientes
+a los datos de población y las empresas y guardarlos en la misma carpeta que el cuadro de mandos. A continución, abriremos el cuadro de mandos con R Studio
+y pulsaremos "Run Document". 
